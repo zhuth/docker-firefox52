@@ -1,20 +1,25 @@
 FROM debian:stretch-slim
 LABEL maintainer "Daniele Tricoli <eriol@mornie.org>"
 
-ENV LAST_UPDATE 2018-06-11
+ENV LAST_UPDATE 2022-01-14
 
-# Directory creation is a workaround for Debian bug 863199.
-# See https://bugs.debian.org/863199
 RUN mkdir -p /usr/share/man/man1 \
-    && apt update \
-    && apt install -qqy \
+    && sed -i 's@deb.debian.org@mirror.sjtu.edu.cn@' /etc/apt/sources.list \
+    && sed -i 's@security.debian.org@mirror.sjtu.edu.cn@' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y \
+	fcitx wget vnc4server tigervnc-common \
         ca-certificates \
-        firefox-esr \
-        icedtea-plugin \
+        icedtea-netx-common \
         --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/* \
+    && wget http://mirror.sjtu.edu.cn/debian/pool/main/f/firefox-esr/firefox-esr_52.8.1esr-1~deb8u1_amd64.deb -O /tmp/ff.deb
+RUN dpkg -i /tmp/ff.deb; apt-get -f install -yq \
+    && rm -rf /var/lib/apt/lists/* /tmp/ff.deb \
     && apt -qqy clean
 
 ENV LANG en-US
+ENV DISPLAY :1
 
-ENTRYPOINT ["/usr/bin/firefox"]
+COPY startup.sh / 
+
+ENTRYPOINT ["bash", "/startup.sh"]
